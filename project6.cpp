@@ -183,6 +183,8 @@ int		WhichProjection;		// ORTHO or PERSP
 int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
 
+bool	ControlPtsOn;			// != 0 means to draw the control points
+bool	ControlLnsOn;			// != 0 means to draw te control lines
 
 // function prototypes:
 
@@ -196,6 +198,8 @@ void	DoDepthMenu( int );
 void	DoDebugMenu( int );
 void	DoMainMenu( int );
 void	DoProjectMenu( int );
+void	DoControlPtsMenu( int );
+void	DoControlLnsMenu( int );
 void	DoRasterString( float, float, float, char * );
 void	DoStrokeString( float, float, float, float, char * );
 float	ElapsedSeconds( );
@@ -515,6 +519,67 @@ Display( )
 		glEnd( );
 
 	}
+
+	// Draw control points if enabled
+	if ( ControlPtsOn )
+	{
+
+		// Loop thru all curves
+		for ( int i = 0; i < NUMCURVES; i++ )
+		{
+
+			glPointSize( 6. );
+			glColor3f( 1., 1., 1. );
+			glBegin( GL_POINTS );
+
+			// For each curve, loop thru all points in curve to draw control points
+			for ( int j = 0; j < Curves[ i ].numpoints; j++ )
+			{
+
+				float x = Curves[ i ].points[ j ].x;
+				float y = Curves[ i ].points[ j ].y;
+				float z = Curves[ i ].points[ j ].z;
+
+				glVertex3f( x, y, z );
+
+			}
+
+			glEnd( );
+
+		}
+
+	}
+
+	// Draw control lines if enabled
+	if ( ControlLnsOn )
+	{
+
+		// Loop thru all curves
+		for ( int i = 0; i < NUMCURVES; i++ )
+		{
+
+			glLineWidth( 2. );
+			glColor3f( 1., 1., 1. );
+			glBegin( GL_LINE_STRIP );
+
+			// For each curve, loop thru all points in curve to draw control lines
+			// by using line strips on each point
+			for ( int j = 0; j < Curves[ i ].numpoints; j++ )
+			{
+
+				float x = Curves[ i ].points[ j ].x;
+				float y = Curves[ i ].points[ j ].y;
+				float z = Curves[ i ].points[ j ].z;
+
+				glVertex3f( x, y, z );
+
+			}
+
+			glEnd( );
+
+		}
+
+	}
 	
 
 #ifdef DEMO_Z_FIGHTING
@@ -622,6 +687,26 @@ void
 DoDepthMenu( int id )
 {
 	DepthCueOn = id;
+
+	glutSetWindow( MainWindow );
+	glutPostRedisplay( );
+}
+
+
+void
+DoControlPtsMenu( int id )
+{
+	ControlPtsOn = id;
+
+	glutSetWindow( MainWindow );
+	glutPostRedisplay( );
+}
+
+
+void
+DoControlLnsMenu( int id )
+{
+	ControlLnsOn = id;
 
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
@@ -750,6 +835,14 @@ InitMenus( )
 	glutAddMenuEntry( "Off",  0 );
 	glutAddMenuEntry( "On",   1 );
 
+	int ctrlptsmenu = glutCreateMenu( DoControlPtsMenu );
+	glutAddMenuEntry( "Disabled", false );
+	glutAddMenuEntry( "Enabled", true );
+
+	int ctrllnsmenu = glutCreateMenu( DoControlLnsMenu );
+	glutAddMenuEntry( "Disabled", false );
+	glutAddMenuEntry( "Enabled", true );
+
 	int projmenu = glutCreateMenu( DoProjectMenu );
 	glutAddMenuEntry( "Orthographic",  ORTHO );
 	glutAddMenuEntry( "Perspective",   PERSP );
@@ -757,6 +850,8 @@ InitMenus( )
 	int mainmenu = glutCreateMenu( DoMainMenu );
 	glutAddSubMenu(   "Axes",          axesmenu);
 	glutAddSubMenu(   "Axis Colors",   colormenu);
+	glutAddSubMenu(	  "Control Pts.",  ctrlptsmenu );
+	glutAddSubMenu(   "Control Lns.",  ctrllnsmenu );
 
 #ifdef DEMO_DEPTH_BUFFER
 	glutAddSubMenu(   "Depth Buffer",  depthbuffermenu);
@@ -1057,6 +1152,15 @@ Keyboard( unsigned char c, int x, int y )
 				glutIdleFunc(Animate);
 			break;
 
+		case 'c':
+		case 'C':
+			ControlPtsOn = !ControlPtsOn;
+			break;
+
+		case 'l':
+		case 'L':
+			ControlLnsOn = !ControlLnsOn;
+
 		default:
 			fprintf( stderr, "Don't know what to do with keyboard hit: '%c' (0x%0x)\n", c, c );
 	}
@@ -1181,6 +1285,8 @@ Reset( )
 	WhichProjection = PERSP;
 	Xrot = Yrot = 0.;
 	Frozen = false;
+	ControlPtsOn = false;
+	ControlLnsOn = false;
 }
 
 
